@@ -1,86 +1,226 @@
-/*
-curve fitting calculation of thermal_conductivity as a function of temperature
-*/
-#include <stdio.h>
-#include <stdlib.h>
-#include "math.h"
-#include <float.h>
+  /*
+   * Implementing Particle Swarm Optimization (PSO) using C language
+   * Thermoconductivity-curve-fitting-in-Particle-Swarm-Optimization-approach
+   * fithermocond.c in main
+   */
 
-/* generate random number between -0.005 and 0.005 */
-#define RNG_UNIFORM() (rand()/(double)RAND_MAX - 0.5)/10
+  #include<stdio.h>
+  #include<stdlib.h>
+  #include<math.h>
+  #include<time.h>
+  #include <omp.h>
 
- double pi=3.14159265;
- double kb=1.38e-23;
- double hb=1.05e-34;
- double hok=7.641812E-12; //get the value of ratio hb/kb;
+  #define c1 1.495 //The acceleration factor is generally obtained from a large number of experiments
+  #define c2 1.495
+  #define maxgen 100  // number of iterations
+  #define sizepop 128 // population size
+  #define dim 5 // the dimension of the particle
+  #define popmin 0 // Individual minimum value
+  #define PI 3.1415926 
+  #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5~+0.5
 
- float v0=3700.0, v1;
- double  L0=1.054e-5, L1;
- double  A0=2.79e-43, A1;
- double  B0=5.38e-18, B1;
- float  D0=370.0, D1;
+   double pop[sizepop][dim]; // define population array
+   double V[sizepop][dim]; // Define the population velocity array
+   double fitness[sizepop]; // Define the fitness array of the population
+   double result[maxgen];  //Define an array to store the optimal value of the population for each iteration
+   double pbest[sizepop][dim];  // location of individual extremes
+   double gbest[dim]; //the location of the group extremum
+   double fitnesspbest[sizepop]; //The value of individual extreme fitness
+   double fitnessgbest; // group extreme fitness value
+   double genbest[maxgen][dim]; //Each generation of optimal value-valued particles
 
- int DSize = 0;
- char * line = NULL;
- size_t len = 0;
- ssize_t read;
+   double kb=1.38e-23;
+   double hb=1.05e-34;
+   double hok=7.641812E-12; //get the value of ratio hb/kb;
 
-/*
-experimental thermoconductivity data,
-X0=temperature in kelvin,Y0=thermocond in W/K*m
-*/
-double X0[300],Y0[300];
+   int DSize = 0;
+   char * line = NULL;
+   size_t len = 0;
+   ssize_t read;
 
- double thermocond(double T, float v,  double L,  double A,  double B, float D)
+   double X0[300],Y0[300];
+
+ double thermocond(double T,  double v,  double L,  double A,  double B,  double D)
 {
-   int x, m=1000;
+   int x, m=512;
    double w;
-   double  Sum=0.0e0, Integral, thermal_conductivity;
-   double  numerator, denominator, Integrand;
-   double  n1, n2, d1, d2, K;
-   double  w_range = D/hok - 0.0;
-   double  dw = w_range/m;
+    double  Sum=0.0, Integral, thermal_conductivity;
+    double  numerator, denominator, Integrand;
+    double n1, n2, d1,d2;
+    double  w_range = ( double) D/hok-0.0;
+    double  dw =  ( double) w_range/m;
 
-   for ( x=1; x<=m; ++x)
-    {w=x*dw;
-     n1=pow(w, 4);
-     n2=exp(hok*w/T);
-     d1=pow(exp(hok*w/T)-1,2);
-     d2=v/L+A*pow(w,4)+B*w*w*T*exp(-D/(3*T));
+    /*
+    int threadCount = 4;
+    #pragma omp parallel num_threads(threadCount)
+    #pragma omp parallel for reduction(+: Sum)
+    */
+    for (x=1; x<=m; ++x)
+     { w=x*dw;
+      n1=pow(w, 4);
+      n2=exp(hok*w/T);
+      d1=pow(exp(hok*w/T)-1,2);
+      d2=v/L+A*pow(w,4)+B*w*w*T*exp(-D/(3*T));
 
-     numerator= n1*n2;
-     denominator= d1*d2;
-     Integrand =numerator/denominator;
-    //   printf("T=%3.0f, n=%Le, d=%Le, Integrand=%Le \n", T, numerator, denominator, Integrand);
-     Sum = Sum + Integrand;
-     }
+      numerator= n1*n2;
+      denominator= d1*d2;
+      Integrand =numerator/denominator;
+       //printf("T=%3.0f, n=%Le, d=%Le, Integrand=%Le \n", iT, numerator, denominator, Integrand);
+      Sum += Integrand;
+      }
 
-    Integral = Sum*dw;
-    K= hok*hb/(2*pi*pi*v*T*T);
-    thermal_conductivity = K*Integral;
-  //printf("T=%f, thermocond=%lf\n", T, thermal_conductivity);
+     Integral = Sum*dw;
+  //  printf("T=%3.0f K, Integr=%5.4Le\n",T,Integral);
+
+     double   K= hok*hb/(2*PI*PI*v*T*T);
+     thermal_conductivity = K*Integral;
+
   return thermal_conductivity;
 }
 
-
-/*squared difference between exper.data and simul.data*/
- double  diff(float v,  double L,  double A,  double B, float D)
+/*
+experimental thermoconductivity data,
+X0=temperature in kelvin, Y0=thermocond in W/K*m
+*
+double X0[25]={2.1,9,17,22.6, 29.7,32.9,34.09,38.1,44.6, 48.446,57,68.2,77.53,87.89, 99.24,115.85,120.24,133.95,153.36,168.58,184.08, 221.02,253.03,260,297.845};
+double Y0[25]={0.075,1.278,4.0, 5.64,6.761,6.993,7.064,7.159, 7.122,7.04,6.77,6.45,6.13,5.79,5.46,4.98,4.857,4.5,4,3.63,3.338,2.949,2.678,2.623,2.4};
+*/
+//fitness function
+/* squared difference between exp. and simul.*/
+double func( double * arr)
 {  int i;
-   double sdiff=0.0, tot=0.0, sumY0=0.0;
-   for( i=0; i<DSize; ++i)
+   double v=arr[0], D=arr[4];
+   double L=arr[1], A=arr[2], B=arr[3];
+   double sdiff=0.0, tot=0.0;
+   for( i=0; i<DSize; i++)
     {
     sdiff=pow((thermocond(X0[i], v, L, A, B, D)-Y0[i]),2);
     tot =tot + sdiff;
-    sumY0 += Y0[i];
     }
- //  printf("sdiff=%Lf, v=%f, L=%Le, A=%Le, B=%Le, D=%f\n", tot, v, L, A, B, D);
-   return tot/sumY0;
+  // printf("sdiff=%Lf, v=%f, L=%Le, A=%Le, B=%Le, D=%f\n", tot, v, L, A, B, D);
+   return tot;
 }
+
+  // Population initialization
+  void pop_init(void)
+  {
+      for(int i=0;i<sizepop;i++)
+      {
+       pop[i][0]= 2700.0*(1+RNG_UNIFORM()); //v0=2700.0
+       pop[i][1]= 1.054e-5*(1+RNG_UNIFORM()); //L0=1.054e-5
+       pop[i][2]= 2.79e-43*(1+RNG_UNIFORM()); //A0=2.79e-43,
+       pop[i][3]= 5.38e-18*(1+RNG_UNIFORM()); //B0=5.38e-18
+       pop[i][4]= 387.0*(1+RNG_UNIFORM()); //D0=287.0,
+
+          for(int j=0;j<dim;j++)
+          {
+            V[i][j]=pop[i][j]/100;
+          }
+          fitness[i] = func(pop[i]); //Calculate the fitness function value
+      }
+  }
+
+  /*min() function definition*/ 
+  double * min(double * fit, int size)
+  {
+      int index = 0; // initialization sequence number
+      double min = *fit; // Initialize the smallest value as the first element of the fit array
+      static double best_fit_index[2];
+      for(int i=1;i<size;i++)
+      {
+          if(*(fit+i) < min)
+              min = *(fit+i);
+              index = i;
+      }
+
+      best_fit_index[0] = index;
+      best_fit_index[1] = min;
+      return best_fit_index;
+    }
+
+  /*iterative optimization*/ 
+  void PSO_func(void)
+  {
+      pop_init();
+      double * best_fit_index; // Used to store group extrema and its position (serial number)
+      best_fit_index = min(fitness,sizepop); //find group extrema
+      int index = (int)(*best_fit_index);
+      // group extreme position
+      for(int j=0;j<dim;j++)
+      {
+          gbest[j] = pop[index][j];
+      }
+      // individual extreme position
+      for(int i=0;i<sizepop;i++)
+      {
+          for(int j=0;j<dim;j++)
+          {
+            pbest[i][j] = pop[i][j];
+          }
+      }
+      // Individual extreme fitness value
+      for(int i=0;i<sizepop;i++)
+      {
+          fitnesspbest[i] = fitness[i];
+      }
+      //group extreme fitness value
+      double bestfitness = *(best_fit_index+1);
+      fitnessgbest = bestfitness;
+
+     //iterative optimization
+     for(int i=0;i<maxgen;i++)
+     {
+       //float w=0.9-0.5*(i/maxgen)*(i/maxgen);
+         for(int j=0;j<sizepop;j++)
+         {
+             //Velocity ​​update and particle update
+             for(int k=0;k<dim;k++)
+             {
+                // velocity update
+                 double rand1 = (double)rand()/RAND_MAX; //random number between 0 and 1
+                 double rand2 = (double)rand()/RAND_MAX;
+                 V[j][k] = 0.9*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
+                  // particle update
+                 pop[j][k] = pop[j][k] + V[j][k];
+                 if(pop[j][k] < popmin)
+                     pop[j][k] = popmin;
+            }
+           fitness[j] = func(pop[j]); //The fitness value of the new particle
+         }
+
+         for(int j=0;j<sizepop;j++)
+         {
+             // Individual extreme value update
+            if(fitness[j] < fitnesspbest[j])
+             {
+                 for(int k=0;k<dim;k++)
+                 {
+                     pbest[j][k] = pop[j][k];
+                 }
+                 fitnesspbest[j] = fitness[j];
+             }
+             // Population extrema update
+            if(fitness[j] < fitnessgbest)
+             {
+                 for(int k=0;k<dim;k++)
+                     gbest[k] = pop[j][k];
+                 fitnessgbest = fitness[j];
+             }
+         }
+
+         for(int k=0;k<dim;k++)
+         {
+             genbest[i][k] = gbest[k]; // The optimal value of each generation is the record of the particle position
+          }
+         result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
+        printf("Cycle[%d]Error=%f\n",i, result[i]/DSize*100);
+     }
+ }
 
 #include <errno.h>
 #include <stdint.h>
 
-// if typedef doesn't exist (msvc, blah)
+/*if typedef doesn't exist (msvc, blah)*/ 
 typedef intptr_t ssize_t;
 
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
@@ -125,11 +265,10 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     return pos;
 }
 
+ /*The main function*/ 
 int main(int argc, char **argv)
-{
- int i=0, j=0;
- double tot0=0.0, tot1=0.0;
-
+ {
+ int i=0;
  if (argc != 2)
     { printf("Usage: fithermocond inputfile\n"); }
 
@@ -145,53 +284,44 @@ int main(int argc, char **argv)
        }
 
  rewind(myFile);
- //printf("\n size=%d\n",size);
+
+ 
   for (i = 0; i < DSize; ++i)
   {
       fscanf(myFile, "%lf%lf", &X0[i], &Y0[i]);
       printf("Input %d: %lf %lf\n",i, X0[i], Y0[i]);
-   //   printf("\n DSize=%d\n",DSize);
   }
 
-  FILE *fp = fopen("result.txt", "w");
+  FILE *fp = fopen("fitresult.txt", "w");
   if (fp == NULL)
      { printf("Error opening OUTPUT file!\n");
        exit(1);
      }
 
- do{
-   tot0=diff(v0, L0, A0, B0, D0);
+     clock_t start,finish; //the start and end time of the procedure
+     start = clock(); //initialize the start time
+     srand((unsigned)time(NULL)); // initialize the random number seeds
+     PSO_func();
 
-   v1=v0*(1+RNG_UNIFORM());
-   L1=L0*(1+RNG_UNIFORM());
-   A1=A0*(1+RNG_UNIFORM());
-   B1=B0*(1+RNG_UNIFORM());
-   D1=D0*(1+RNG_UNIFORM());
-   tot1=diff(v1, L1, A1, B1, D1);
+     double * best_arr;
+     best_arr = min(result,maxgen);
+     int best_gen_number = *best_arr; // the index number of the optimal value
+     double best = *(best_arr+1); //the otimal value
 
-   if (tot1<tot0)
-     {v0=v1; L0=L1; A0=A1; B0=B1; D0=D1;
-      j++;
-      printf("Cycle%d (err=%Lf): v=%f, L=%Le, A=%Le, B=%Le, D=%f\n", j, tot1, v0, L0, A0, B0, D0);
-     }
+  for (i = 0; i<DSize; i=i+1){
+      fprintf(fp, "%lf %lf\n", X0[i], thermocond(X0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+      printf("Output%d: %lf %lf\n", i, X0[i], thermocond(X0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+      }
 
-   }while(fabsl(tot0-tot1)>1e-5 || tot1 >0.05);
-
-
-for (i = 0; i<DSize; i=i+1){
-   //   printf("DSize=%d",DSize);
-      fprintf(fp, "%lf %lf\n", X0[i], thermocond(X0[i], v0, L0, A0, B0, D0));
-   //   printf("Output%d: %lf %lf\n", i, X0[i], thermocond(X0[i], v0, L0, A0, B0, D0));
-    }
+    printf("After iterating %d times, the optimal value is obtained at the %dth time, and the optimal value is:%f.\n",maxgen,best_gen_number+1,best);
+    printf("The position where the optimal value is obtained is:\nv=%Le, \nL=%Le, \nA=%Le, \nB=%Le, \nD=%Le\n",genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+    finish = clock(); //End time
+    double duration = (double)(finish - start)/CLOCKS_PER_SEC; // program running time
+    printf("Program running time:%lf seconds\n",duration);
 
   fclose(myFile);
   fclose(fp);
   if (line)
      free(line);
-
- printf("Results: v=%f, L=%Le, A=%Le, B=%Le, D=%f\n", v0, L0, A0, B0, D0);
- printf("Simulated curve is listed in result.txt !");
   exit(EXIT_SUCCESS);
-//return 0;
-}
-
+ }
