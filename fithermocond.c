@@ -84,10 +84,7 @@
 /*
 experimental thermoconductivity data,
 X0=temperature in kelvin, Y0=thermocond in W/K*m
-*
-double X0[25]={2.1,9,17,22.6, 29.7,32.9,34.09,38.1,44.6, 48.446,57,68.2,77.53,87.89, 99.24,115.85,120.24,133.95,153.36,168.58,184.08, 221.02,253.03,260,297.845};
-double Y0[25]={0.075,1.278,4.0, 5.64,6.761,6.993,7.064,7.159, 7.122,7.04,6.77,6.45,6.13,5.79,5.46,4.98,4.857,4.5,4,3.63,3.338,2.949,2.678,2.623,2.4};
-*/
+
 //fitness function
 /* squared difference between exp. and simul.*/
 double func( double * arr)
