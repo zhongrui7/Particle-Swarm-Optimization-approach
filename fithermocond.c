@@ -2,6 +2,9 @@
    * Implementing Particle Swarm Optimization (PSO) using C language
    * Thermoconductivity-curve-fitting-in-Particle-Swarm-Optimization-approach
    * fithermocond.c in main
+   * reference:
+   * J. Callaway, Phys. Rev. 113, 1046 (1959). 
+   * J. Callaway, Phys. Rev. 120, 1149 (1960).
    */
 
   #include<stdio.h>
