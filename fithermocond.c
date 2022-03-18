@@ -281,7 +281,7 @@ int main(int argc, char **argv)
  if (myFile == NULL)
         exit(EXIT_FAILURE);
  while ((read = getline(&line, &len, myFile)) != -1) {
-        printf("Retrieved line of length %zu:  ", read);
+        printf("Retrieved line of length %zu:  ", DSize);
         printf("%s \n", line);
         DSize++;
        }
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
      double * best_arr;
      best_arr = min(result,maxgen);
      int best_gen_number = *best_arr; // the index number of the optimal value
-     double best = *(best_arr+1); //the otimal value
+     double best = *(best_arr+1); //the optimal value
 
   for (i = 0; i<DSize; i=i+1){
       fprintf(fp, "%lf %lf\n", X0[i], thermocond(X0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
