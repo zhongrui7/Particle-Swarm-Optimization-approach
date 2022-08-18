@@ -229,9 +229,7 @@ double func2(double * arr)
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
        if(i%40==0)printf("*");
-//         printf("Cycle[%d]Error=%Le: \t",i, result[i]);
-//         printf("Jph=%Le[mA/cm^2], Js=%Le[mA/cm^2], Rs=%Le, Rp=%9.2f, n=%5.3f\n",1000*genbest[i][0],1000*genbest[i][1], genbest[i][2], genbest[i][3], genbest[i][4]);
-     }
+    }
  }
 
 #include <errno.h>
@@ -393,10 +391,7 @@ int main(int argc, char **argv)
 
  if(myFile == NULL)
         exit(EXIT_FAILURE);
-  while((read = getline(&line, &len, myFile)) != -1) {
- //       printf("Retrieved line of length %d:  %s", DSize, line);
-        DSize++;
-       }
+  while((read = getline(&line, &len, myFile)) != -1) {        DSize++;       }
 
  rewind(myFile);
 
@@ -450,8 +445,6 @@ int main(int argc, char **argv)
        strcat(out, "_fit1.dat");
        strcat(out,"\0");
        fp1 = fopen(out, "w");
-
-       // FILE *fp = fopen("psofit_result.txt", "w");
        if (fp1 == NULL)
           { printf("Error opening OUTPUT file %s!\n",out);
             exit(1);
@@ -471,8 +464,6 @@ int main(int argc, char **argv)
        strcat(out, "_fit2.dat");
        strcat(out,"\0");
        fp2 = fopen(out, "w");
-
-       // FILE *fp = fopen("psofit_result.txt", "w");
        if (fp2 == NULL)
           { printf("Error opening OUTPUT file %s!\n",out);
             exit(1);
