@@ -407,32 +407,22 @@ int main(int argc, char **argv)
     }
 
 
-     memset(out, '\0', sizeof(out));
-     strncat(out, argv[1],6);
-     model==1? strcat(out, "_fit1.dat"):strcat(out, "_fit2.dat");
-     strcat(out,"\0");
-     fp = fopen(out, "w");
-     if (fp == NULL)
-          { printf("Error opening OUTPUT file %s!\n",out);
-            exit(1);
-           }
-
  printf("Which model should be used for the IV curve fitting (enter 1 or 2)?:\n ");
  printf("\t 1: a single-diode model\n ");
  printf("\t 2: a double-diode model\n ");
  scanf(" %c",&model);
  switch(model)
- { case '1':
+  { case '1':
      printf("Single-diode model is selected:\n\t IL1=Jph - Js*(exp((V0+I0*Rs)/(n*Vt)) -1) - (V0+I0*Rs)/Rp \n");
      break;
-   case '2':
+    case '2':
      printf("Double-diode model is selected:\n\t IL2=Jph - Js1*(exp((V0+I0*Rs)/(n1*Vt)) -1) - Js2*(exp((V0+I0*Rs)/(n2*Vt)) -1) - (V0+I0*Rs)/Rp \n");
      printf("diode ideality factors n1, and n2, \n\t are fixed to 1 and 2 to represent the diffusion and recombination current terms, respectively!\n");
      break;
-   default:
+    default:
      printf("Error! this model is not available, please enter either 1 or 2, Bye! \n");
      return 0;
- }
+  }
 
      Cell_perf();
 
@@ -443,16 +433,29 @@ int main(int argc, char **argv)
      printf("PSO is working on Model %c, please wait : \n", model);
      PSO_func();
 
+  
+   /* Save fitting curve into a file */
      double * best_arr;
      best_arr = min(result,maxgen);
      int best_gen_number = *best_arr; // the index number of the optimal value
      double best = *(best_arr+1); //the optimal value
      printf("\n After iterating %d times, the optimal value is: %Le.\n",maxgen, best);
 
-     /* Save fitting curve into a file */
+     memset(out, '\0', sizeof(out));
+     strncat(out, argv[1],6);
+     model=='1'? strcat(out, "_fit1.dat") : strcat(out, "_fit2.dat");
+    //       strcat(out, model=='1'?"_fit1.dat" : "_fit2.dat");
+     strcat(out,"\0");
+     fp = fopen(out, "w");
+     if (fp == NULL)
+          { printf("Error opening OUTPUT file %s!\n",out);
+            exit(1);
+           }
+
+
       switch(model)
       {
-      case '1':
+       case '1':
           printf("\n Single-diode model PSO fitting results:\n");
           printf("\t Jph=%7.3f[mA/cm^2], Js=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2], n=%f\n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
@@ -464,7 +467,7 @@ int main(int argc, char **argv)
             }
          break;
 
-      case '2':
+       case '2':
           printf("\n Double-diode model PSO fitting results:\n");
           printf("\t Jph=%7.3f[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
@@ -475,11 +478,11 @@ int main(int argc, char **argv)
               else{fprintf(fp, "%lf %lf\n", V0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
 
-        break;
+         break;
               }
             /* End of Saving fit-curve into a file */
 
-    printf("\n\t Simulated curve is saved in \'%s\'!\n", out);
+    printf("\n\t Simulated curve is saved in \' %s \'!\n", out);
 
     finish = clock(); //End time
     double duration = (double)(finish - start)/CLOCKS_PER_SEC; // program running time
