@@ -229,7 +229,9 @@ double func2(double * arr)
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
        if(i%40==0)printf("*");
-    }
+//         printf("Cycle[%d]Error=%Le: \t",i, result[i]);
+//         printf("Jph=%Le[mA/cm^2], Js=%Le[mA/cm^2], Rs=%Le, Rp=%9.2f, n=%5.3f\n",1000*genbest[i][0],1000*genbest[i][1], genbest[i][2], genbest[i][3], genbest[i][4]);
+     }
  }
 
 #include <errno.h>
@@ -372,7 +374,7 @@ int main(int argc, char **argv)
  {
   int i=0, j=0;
   char *out=malloc(strlen(argv[1]) + 9);
-  FILE * fp1, * fp2;
+  FILE *fp;
   printf("Parameter extraction of solar cells based on a single/double diode model using Particle Swarm Optimization\n");
   printf("the input IV curve data must be a 2-column ASCII file (V I) \n");
 
@@ -386,12 +388,15 @@ int main(int argc, char **argv)
   printf("\t 2: mA/cm^2 \n ");
   do{scanf("%s",&CurrentUnit);}while(CurrentUnit!='1'&&CurrentUnit!='2');
 
- FILE *myFile;
- myFile = fopen(argv[1], "r");
+  FILE *myFile;
+  myFile = fopen(argv[1], "r");
 
- if(myFile == NULL)
+  if(myFile == NULL)
         exit(EXIT_FAILURE);
-  while((read = getline(&line, &len, myFile)) != -1) {        DSize++;       }
+  while((read = getline(&line, &len, myFile)) != -1) {
+ //       printf("Retrieved line of length %d:  %s", DSize, line);
+        DSize++;
+       }
 
  rewind(myFile);
 
@@ -404,7 +409,13 @@ int main(int argc, char **argv)
 
      memset(out, '\0', sizeof(out));
      strncat(out, argv[1],6);
-
+     model==1? strcat(out, "_fit1.dat"):strcat(out, "_fit2.dat");
+     strcat(out,"\0");
+     fp = fopen(out, "w");
+     if (fp == NULL)
+          { printf("Error opening OUTPUT file %s!\n",out);
+            exit(1);
+           }
 
  printf("Which model should be used for the IV curve fitting (enter 1 or 2)?:\n ");
  printf("\t 1: a single-diode model\n ");
@@ -442,40 +453,26 @@ int main(int argc, char **argv)
       switch(model)
       {
       case '1':
-       strcat(out, "_fit1.dat");
-       strcat(out,"\0");
-       fp1 = fopen(out, "w");
-       if (fp1 == NULL)
-          { printf("Error opening OUTPUT file %s!\n",out);
-            exit(1);
-           }
           printf("\n Single-diode model PSO fitting results:\n");
           printf("\t Jph=%7.3f[mA/cm^2], Js=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2], n=%f\n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp1, "%lf %lf\n", V0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-            else {fprintf(fp1, "%lf %lf\n", V0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf\n", V0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            else {fprintf(fp, "%lf %lf\n", V0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
 
       case '2':
-       strcat(out, "_fit2.dat");
-       strcat(out,"\0");
-       fp2 = fopen(out, "w");
-       if (fp2 == NULL)
-          { printf("Error opening OUTPUT file %s!\n",out);
-            exit(1);
-           }
           printf("\n Double-diode model PSO fitting results:\n");
           printf("\t Jph=%7.3f[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
           for (i = 0; i<DSize; i=i+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp2, "%lf %lf\n", V0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-              else{fprintf(fp2, "%lf %lf\n", V0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+              fprintf(fp, "%lf %lf\n", V0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              else{fprintf(fp, "%lf %lf\n", V0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
 
         break;
@@ -489,8 +486,8 @@ int main(int argc, char **argv)
     printf("\n #- Program running time: %lf seconds -#",duration);
 
   fclose(myFile);
-  fclose(fp1);
-  fclose(fp2);
+  fclose(fp);
+
   if (line)
      free(line);
   exit(EXIT_SUCCESS);
