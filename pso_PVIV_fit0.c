@@ -495,7 +495,7 @@ int main(int argc, char **argv)
          { printf("Error opening OUTPUT file %s!\n",out);
             exit(1);
            }
-     fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[mA/cm2]", "Jfit[mA/cm2]");
+     (CurrentUnit=='2')?fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[mA/cm2]", "Jfit[mA/cm2]"):fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[A/cm2]", "Jfit[A/cm2]");
 
       switch(model)
       {
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf %lf\n", V0[i], 1000*I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
             else {fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
@@ -518,7 +518,7 @@ int main(int argc, char **argv)
           for (i = 0; i<DSize; i=i+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              fprintf(fp, "%lf %lf %lf\n", V0[i], 1000*I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
               else{fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
 
