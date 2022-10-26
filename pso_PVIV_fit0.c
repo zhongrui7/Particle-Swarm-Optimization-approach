@@ -17,7 +17,7 @@
   #define c1 1.495 //The acceleration factor is generally obtained from a large number of experiments
   #define c2 1.495
   #define maxgen 4096  // number of iterations
-  #define sizepop 256 // population size
+  #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
   #define popmin 0 // Individual minimum value
   #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5~+0.5
@@ -36,16 +36,17 @@
    double q = 1.6e-19;
    double T = 300; /* temperature in Kelvin */
    double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
+   double A = 1.0; /* Solar cell area  in cm^2 */
 
-   double Jph0=1.2e-3,  Rs0=1, Rp0=9000; /* initial common parameters for both single/double-diode */
-   double Js0=1.2e-7, n0=1; /* initial single-diode parameters */
-   double Js10=1.2e-7, Js20=1.2e-7, n1=1, n2=2; /* initial double-diode parameters */
+   double Jph0,  Rs0, Rp0; /* initial common parameters for both single/double-diode */
+   double Js0, n0; /* initial single-diode parameters */
+   double Js10, Js20, n1=1, n2=2; /* initial double-diode parameters */
    double V0[300],I0[300]; /*experimental I-V curve data*/
    double Jsc=0, Voc=0, FF=0, Pmax=0, Vm=0, Jm=0, eff=0;
 
-   int DSize = 0;
+   int    DSize = 0;
    char * line = NULL;
-   char model, CurrentUnit;
+   char   model, CurrentUnit;
    size_t len = 0;
    ssize_t read;
 
@@ -62,29 +63,31 @@
    return  (Jph - Js1*(exp((V0+I0*Rs)/(n1*Vt)) -1)-Js2*(exp((V0+I0*Rs)/(n2*Vt)) -1)-(V0+I0*Rs)/Rp);
    }
 
-/* fitness function squared difference between exp. and simul.*/
-double func1(double * arr)
+ /* fitness function squared difference between exp. and simul.*/
+ double func1(double * arr)
   {  int i;
    double Jph=arr[0], Js=arr[1], Rs=arr[2], Rp=arr[3], n=arr[4];
    double erf=0.0, tot=0.0;
 
    for( i=0; i<DSize; ++i)
     {
-      erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+  //    erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+      erf = IL1(V0[i], I0[i], Jph, Js, Rs, Rp, n)-I0[i];
       tot = tot + erf*erf;
     }
 
    return tot/DSize;
   }
 
-double func2(double * arr)
+ double func2(double * arr)
   {  int i;
    double Jph=arr[0], Js1=arr[1], Js2=arr[2], Rs=arr[3], Rp=arr[4];
    double erf=0.0, tot=0.0;
 
    for( i=0; i<DSize; ++i)
     {
-    erf = Jph -Js1*(exp((V0[i]+I0[i]*Rs)/(n1*Vt)) -1) -Js2*(exp((V0[i]+I0[i]*Rs)/(n2*Vt)) -1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+   // erf = Jph -Js1*(exp((V0[i]+I0[i]*Rs)/(n1*Vt)) -1) -Js2*(exp((V0[i]+I0[i]*Rs)/(n2*Vt)) -1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+    erf = IL2(V0[i], I0[i], Jph, Js1, Js2, Rs, Rp) - I0[i];
     tot = tot + erf*erf;
     }
 
@@ -234,12 +237,12 @@ double func2(double * arr)
      }
  }
 
-#include <errno.h>
-#include <stdint.h>
-/* if typedef doesn't exist (msvc, blah) */
-typedef intptr_t ssize_t;
+ #include <errno.h>
+ #include <stdint.h>
+ /* if typedef doesn't exist (msvc, blah) */
+ typedef intptr_t ssize_t;
 
-ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
+ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     size_t pos;
     int c;
 
@@ -369,12 +372,15 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     else{printf("\n\t $$$ The input IV curve is a dark current! $$$\n");}
    }
 
- /*The main function*/
+ /*  The main function   */
 int main(int argc, char **argv)
  {
-  int i=0, j=0;
-  char *out=malloc(strlen(argv[1]) + 9);
-  FILE *fp;
+  int i=0, j=0, k=0;
+  char chr;
+  double * best_arr;
+  int best_gen_number; // the index number of the optimal value
+  double best; //the optimal value
+
   printf("Parameter extraction of solar cells based on a single/double diode model using Particle Swarm Optimization\n");
   printf("the input IV curve data must be a 2-column ASCII file (V I) \n");
 
@@ -388,8 +394,14 @@ int main(int argc, char **argv)
   printf("\t 2: mA/cm^2 \n ");
   do{scanf("%s",&CurrentUnit);}while(CurrentUnit!='1'&&CurrentUnit!='2');
 
+  printf("Input Solar Cell Size and Temperature: [default: 1.0cm^2, 300K] \n");
+  scanf("%f, %f", &A, &T);
+  Vt = 0.025875*T/300; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
+
   FILE *myFile;
   myFile = fopen(argv[1], "r");
+  char *out=malloc(strlen(argv[1]) + 9);
+  FILE *fp;
 
   if(myFile == NULL)
         exit(EXIT_FAILURE);
@@ -398,11 +410,12 @@ int main(int argc, char **argv)
         DSize++;
        }
 
- rewind(myFile);
+  rewind(myFile);
 
   for(i = 0; i < DSize; ++i)
    {
      fscanf(myFile, "%lf%lf", &V0[i], &I0[i]);
+     I0[i]=I0[i]/A;
      if(CurrentUnit=='2')I0[i]=I0[i]/1000;
     }
 
@@ -423,35 +436,66 @@ int main(int argc, char **argv)
      printf("Error! this model is not available, please enter either 1 or 2, Bye! \n");
      return 0;
   }
-
+     /* print the solar cell performance including Voc, Isc, FF, eff */
      Cell_perf();
 
+     /*  start PSO timing*/
      clock_t start,finish; //the start and end time of the procedure
      start = clock(); //initialize the start time
      srand((unsigned)time(NULL)); // initialize the random number seeds
 
+   do{
      printf("PSO is working on Model %c, please wait : \n", model);
      PSO_func();
-
-  
-   /* Save fitting curve into a file */
-     double * best_arr;
+     k++;
+     /* index the best fit */
      best_arr = min(result,maxgen);
-     int best_gen_number = *best_arr; // the index number of the optimal value
-     double best = *(best_arr+1); //the optimal value
-     printf("\n After iterating %d times, the optimal value is: %Le.\n",maxgen, best);
+     best_gen_number = *best_arr; // the index number of the optimal value
+     best = *(best_arr+1); //the optimal value
+     printf("\n After iterating %d times, the optimal value is: %Le.\n",k*maxgen, best);
 
+      /* replace the initial parameters with the best fit */
+     switch(model)
+          {
+          case '1':
+              Jph0 = genbest[best_gen_number][0]; //Jph, photogenerated current density (ampere/cm2)
+              Js0  = genbest[best_gen_number][1]; //reverse saturation current density (ampere/cm2)
+              Rs0  = genbest[best_gen_number][2]; //Rs, specific series resistance (Ω·cm2)
+              Rp0  = genbest[best_gen_number][3]; //Rsh, specific shunt resistance (Ω·cm2).
+              n0   = genbest[best_gen_number][4]; //n, diode ideality factor (1 for an ideal diode),
+            break;
+
+          case '2':
+              Jph0 = genbest[best_gen_number][0]; //Jph, photogenerated current density (ampere/cm2)
+              Js10 = genbest[best_gen_number][1]; //diffusion current density (ampere/cm2)
+              Js20 = genbest[best_gen_number][2]; // recombination current density (ampere/cm2)
+              Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm2)
+              Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm2).
+            break;
+          }
+
+     printf(" Continue the PSO fitting? [y/n]");
+     scanf(" %c",&chr);
+     printf(" your answer is %c \n", chr);
+    }while(chr=='Y'||chr=='y');
+
+
+    finish = clock(); //End time
+    double duration = (double)(finish - start)/CLOCKS_PER_SEC; // program running time
+    printf("\n #- Program running time: %lf seconds -#",duration);
+
+
+   /* Save fitting curve into a file */
      memset(out, '\0', sizeof(out));
      strncat(out, argv[1],6);
-     model=='1'? strcat(out, "_fit1.dat") : strcat(out, "_fit2.dat");
-    //       strcat(out, model=='1'?"_fit1.dat" : "_fit2.dat");
+     strcat(out, model=='1'? "_fit1.dat" : "_fit2.dat");
      strcat(out,"\0");
      fp = fopen(out, "w");
      if (fp == NULL)
-          { printf("Error opening OUTPUT file %s!\n",out);
+         { printf("Error opening OUTPUT file %s!\n",out);
             exit(1);
            }
-
+     fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[mA/cm2]", "Jfit[mA/cm2]");
 
       switch(model)
       {
@@ -462,8 +506,8 @@ int main(int argc, char **argv)
 
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp, "%lf %lf\n", V0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-            else {fprintf(fp, "%lf %lf\n", V0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            else {fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
 
@@ -474,8 +518,8 @@ int main(int argc, char **argv)
           for (i = 0; i<DSize; i=i+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp, "%lf %lf\n", V0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-              else{fprintf(fp, "%lf %lf\n", V0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+              fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              else{fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
 
          break;
@@ -484,9 +528,7 @@ int main(int argc, char **argv)
 
     printf("\n\t Simulated curve is saved in \' %s \'!\n", out);
 
-    finish = clock(); //End time
-    double duration = (double)(finish - start)/CLOCKS_PER_SEC; // program running time
-    printf("\n #- Program running time: %lf seconds -#",duration);
+
 
   fclose(myFile);
   fclose(fp);
