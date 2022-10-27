@@ -71,8 +71,8 @@
 
    for( i=0; i<DSize; ++i)
     {
-  //    erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
-      erf = IL1(V0[i], I0[i], Jph, Js, Rs, Rp, n)-I0[i];
+      erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+  //    erf = IL1(V0[i], I0[i], Jph, Js, Rs, Rp, n) - I0[i];
       tot = tot + erf*erf;
     }
 
@@ -355,8 +355,9 @@
           case '1':
         //     Jph0 = Jm + Jsc*(exp((Rs0*Jm+Vm)/(n0*Vt))-1) + (Vm+Rs0*Jm)/Rp0;
         //      Js0 = Jsc/(exp(Voc*q/(k*T))-1);
-                Js0 = (Jsc*(Rp0-Rs0) - Voc)/(Rp0*(exp(Voc/(n0*Vt))-exp(Rs0*Jsc/(n0*Vt))));
                 n0  = 1.0;
+                Js0 = (Jsc*(Rp0-Rs0) - Voc)/(Rp0*(exp(Voc/(n0*Vt))-exp(Rs0*Jsc/(n0*Vt))));
+
   //              e1 = exp(Voc/(n0*Vt));
   //              Jph0 = Js0*(e1 - 1) + (Voc / Rp0);
             printf("Initial guess:\n\t Jph0=%Le[mA/cm^2], Js0=%Le[mA/cm^2],\n\t Rs0=%7.3f[Ohm.cm^2], Rp0=%9.3f[Ohm.cm^2], n0=%3.2f\n", Jph0*1000, Js0*1000, Rs0, Rp0, n0);
