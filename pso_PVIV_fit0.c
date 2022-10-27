@@ -38,9 +38,9 @@
    double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
    double A = 1.0; /* Solar cell area  in cm^2 */
 
-   double Jph0,  Rs0, Rp0; /* initial common parameters for both single/double-diode */
-   double Js0, n0; /* initial single-diode parameters */
-   double Js10, Js20, n1=1, n2=2; /* initial double-diode parameters */
+   double Jph0=1.2e-3,  Rs0=0.1, Rp0=2345; /* initial common parameters for both single/double-diode */
+   double Js0=1.2e-5, n0=1; /* initial single-diode parameters */
+   double Js10=1.2e-7, Js20=1.2e-7, n1=1, n2=2; /* initial double-diode parameters */
    double V0[300],I0[300]; /*experimental I-V curve data*/
    double Jsc=0, Voc=0, FF=0, Pmax=0, Vm=0, Jm=0, eff=0;
 
@@ -395,10 +395,19 @@ void SortV(double arrV[],double arrI[], int n)
             break;
          }
        }
-    else{printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");}
+    else{printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");
+       Jph0 =0;
+       Js0  =I0[(int)((DSize + p)/2)];
+       //Js0 = exp(log(abs(I0[(int)((DSize + p)/2)]))- (V0[(int)((DSize + p)/2)]/Vt)); /* from diode equation: I=Is*exp(V/nT) */
+       n0=1; printf("Js0=%Le\n", Js0);
+       Rs0 = (fabs((V0[s+1]-V0[s-2])/(I0[s+1]-I0[s-2]))+fabs((V0[s+2]-V0[s-1])/(I0[s+2]-I0[s-1])))/2;
+       Rp0 = (fabs((V0[p+1]-V0[p-2])/(I0[p+1]-I0[p-2]))+fabs((V0[p+2]-V0[p-1])/(I0[p+2]-I0[p-1])))/2;
+       Js10 = Js0;
+       Js20 = Js0;
+    }
    }
 
- /*  The main function   */
+ /*  The main photovoltaic parameter extraction function   */
 int main(int argc, char **argv)
  {
   int i=0, j=0, k=0;
