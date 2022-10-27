@@ -323,7 +323,7 @@ void SortV(double arrV[],double arrI[], int n)
    SortV(V0,I0, DSize);
 
   /* change current polarity if the short circuit current is negative */
-   if ((V0[1]*I0[1]) > 0 && V0[1]<0 && I0[1]<0)
+   if ((V0[1]*I0[1]) > 0 && I0[1]<0)
    for( i=0; i < DSize; ++i)
     {
      I0[i]=-I0[i];
