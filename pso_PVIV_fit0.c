@@ -284,6 +284,34 @@
     return pos;
 }
 
+void swap(double* xp, double* yp)
+{
+    double temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+
+// Function to perform Selection Sort
+void SortV(double arrV[],double arrI[], int n)
+{
+    int i, j, min_idx;
+
+    // One by one move boundary of unsorted subarray
+    for (i = 0; i < n - 1; i++) {
+
+        // Find the minimum element in unsorted array
+        min_idx = i;
+        for (j = i + 1; j < n; j++)
+            if (arrV[j] < arrV[min_idx])
+                min_idx = j;
+
+        // Swap the found minimum element with the first element
+        swap(&arrV[min_idx], &arrV[i]);
+        swap(&arrI[min_idx], &arrI[i]);
+    }
+}
+
+  /* calculate solar cell parameters including Voc, Isc, FF, and effi. */
   void Cell_perf()
    {
    /* find open circuit voltage and short circuit current */
@@ -291,7 +319,17 @@
    double Vtmp=fabs(V0[0]), e1, e2;
    double Itmp=fabs(I0[0]);
 
+   /*  sort voltage array in ascending order, current array changes accordingly */
+   SortV(V0,I0, DSize);
+
+  /* change current polarity if the short circuit current is negative */
+   if ((V0[1]*I0[1]) > 0 && V0[1]<0 && I0[1]<0)
    for( i=0; i < DSize; ++i)
+    {
+     I0[i]=-I0[i];
+    }
+
+     for( i=0; i < DSize; ++i)
     {
      /* find Jsc */
      if(fabs(V0[i]) < Vtmp)
@@ -312,30 +350,17 @@
           m=i;
           };
     }
-
-
-     /* change polarity if the short circuit current is negative */
-     if(I0[p]<0)
-        { Pmax=0;
-         for( i=0; i< DSize; ++i)
-            {I0[i]=-1*I0[i];
-             if ((V0[i]*I0[i]) > Pmax && V0[i]>0 && I0[i]>0)
-               {
-                 Pmax=V0[i]*I0[i];
-                 m=i;
-                };
-           };
-         };
         Vm=V0[m];
         Jm=I0[m];
 
+     /* calculate Voc=open circuit voltage and Isc=short circuit current */
       Jsc= (V0[p]==0)? fabs(I0[p]) : I0[p-1]-V0[p-1]*(I0[p+1]-I0[p-1])/(V0[p+1]-V0[p-1]);
       Voc= (I0[s]==0)? fabs(V0[s]) : V0[s-1]-I0[s-1]*(V0[s+1]-V0[s-1])/(I0[s+1]-I0[s-1]);
 
-     /* for dark current curve presents in I and III quadrants */
+     /* make sure the dark current curve presenting in I and III quadrants */
      if(Jsc==0 && V0[p+3]*I0[p+3]>0)
         {for( i=0; i < DSize; ++i)
-         {I0[i]=-1*I0[i];};
+            {I0[i]=-1*I0[i];};
          };
 
     printf("\t Voc=V0[%d]=%f, Jsc=I0[%d]=%f \n", s,Voc, p,Jsc);
@@ -370,7 +395,7 @@
             break;
          }
        }
-    else{printf("\n\t $$$ The input IV curve is a dark current! $$$\n");}
+    else{printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");}
    }
 
  /*  The main function   */
@@ -464,6 +489,11 @@ int main(int argc, char **argv)
               Rs0  = genbest[best_gen_number][2]; //Rs, specific series resistance (Ω·cm2)
               Rp0  = genbest[best_gen_number][3]; //Rsh, specific shunt resistance (Ω·cm2).
               n0   = genbest[best_gen_number][4]; //n, diode ideality factor (1 for an ideal diode),
+          printf("\n Single-diode model PSO fitting results:\n");
+          printf("\t Jph=%7.3f[mA/cm^2], Js=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2], n=%f\n",
+                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+
+
             break;
 
           case '2':
@@ -472,12 +502,16 @@ int main(int argc, char **argv)
               Js20 = genbest[best_gen_number][2]; // recombination current density (ampere/cm2)
               Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm2)
               Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm2).
+              printf("\n Double-diode model PSO fitting results:\n");
+              printf("\t Jph=%7.3f[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
+                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+
             break;
           }
 
      printf(" Continue the PSO fitting? [y/n]");
      scanf(" %c",&chr);
-     printf(" your answer is %c \n", chr);
+
     }while(chr=='Y'||chr=='y');
 
 
@@ -498,31 +532,23 @@ int main(int argc, char **argv)
            }
      (CurrentUnit=='2')?fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[mA/cm2]", "Jfit[mA/cm2]"):fprintf(fp, "%s %s %s\n", "Bias[V]", "Jexp[A/cm2]", "Jfit[A/cm2]");
 
-      switch(model)
+       switch(model)
       {
        case '1':
-          printf("\n Single-diode model PSO fitting results:\n");
-          printf("\t Jph=%7.3f[mA/cm^2], Js=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2], n=%f\n",
-                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
-
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp, "%lf %lf %lf\n", V0[i], 1000*I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-            else {fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf  %lf\n", V0[i],1000*I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            else {fprintf(fp, "%lf %lf  %lf\n", V0[i],I0[i],  IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
 
        case '2':
-          printf("\n Double-diode model PSO fitting results:\n");
-          printf("\t Jph=%7.3f[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
-                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
           for (i = 0; i<DSize; i=i+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp, "%lf %lf %lf\n", V0[i], 1000*I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-              else{fprintf(fp, "%lf %lf %lf\n", V0[i], I0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+              fprintf(fp, "%lf %lf  %lf\n", V0[i], 1000*I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              else{fprintf(fp, "%lf %lf  %lf\n", V0[i], I0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
-
          break;
               }
             /* End of Saving fit-curve into a file */
