@@ -71,8 +71,8 @@
 
    for( i=0; i<DSize; ++i)
     {
-      erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
-  //    erf = IL1(V0[i], I0[i], Jph, Js, Rs, Rp, n) - I0[i];
+  //    erf = Jph - Js*(exp((V0[i]+I0[i]*Rs)/(n*Vt))- 1)-(V0[i]+I0[i]*Rs)/Rp - I0[i];
+      erf = IL1(V0[i], I0[i], Jph, Js, Rs, Rp, n) - I0[i];
       tot = tot + erf*erf;
     }
 
@@ -323,7 +323,7 @@ void SortV(double arrV[],double arrI[], int n)
    SortV(V0,I0, DSize);
 
   /* change current polarity if the short circuit current is negative */
-   if ((V0[1]*I0[1]) > 0 && I0[1]<0)
+   if ((V0[1]*I0[1]) > 0 && I0[0]+I0[1]<0)
    for( i=0; i < DSize; ++i)
     {
      I0[i]=-I0[i];
@@ -357,15 +357,10 @@ void SortV(double arrV[],double arrI[], int n)
       Jsc= (V0[p]==0)? fabs(I0[p]) : I0[p-1]-V0[p-1]*(I0[p+1]-I0[p-1])/(V0[p+1]-V0[p-1]);
       Voc= (I0[s]==0)? fabs(V0[s]) : V0[s-1]-I0[s-1]*(V0[s+1]-V0[s-1])/(I0[s+1]-I0[s-1]);
 
-     /* make sure the dark current curve presenting in I and III quadrants */
-     if(Jsc==0 && V0[p+3]*I0[p+3]>0)
-        {for( i=0; i < DSize; ++i)
-            {I0[i]=-1*I0[i];};
-         };
 
     printf("\t Voc=V0[%d]=%f, Jsc=I0[%d]=%f \n", s,Voc, p,Jsc);
       /* print out the photovoltaic performance if the input IV curve is an illuminated one */
-    if(Jsc!=0)
+    if(Jsc!=0&&Voc!=0)
      {
         FF = Pmax/(Voc*Jsc);
        eff = Pmax*1000;
@@ -395,13 +390,14 @@ void SortV(double arrV[],double arrI[], int n)
             break;
          }
        }
-    else{printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");
-       Jph0 =0;
-       Js0  =I0[(int)((DSize + p)/2)];
-       //Js0 = exp(log(abs(I0[(int)((DSize + p)/2)]))- (V0[(int)((DSize + p)/2)]/Vt)); /* from diode equation: I=Is*exp(V/nT) */
-       n0=1; printf("Js0=%Le\n", Js0);
-       Rs0 = (fabs((V0[s+1]-V0[s-2])/(I0[s+1]-I0[s-2]))+fabs((V0[s+2]-V0[s-1])/(I0[s+2]-I0[s-1])))/2;
-       Rp0 = (fabs((V0[p+1]-V0[p-2])/(I0[p+1]-I0[p-2]))+fabs((V0[p+2]-V0[p-1])/(I0[p+2]-I0[p-1])))/2;
+    else{
+       printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");
+       Jph0 = 0;
+       //Js0  = I0[(int)((DSize + p)/2)];
+       Js0  = -((I0[(int)((DSize + p)/2)])/exp(V0[(int)((DSize + p)/2)]/Vt -1)+I0[DSize]/exp(V0[DSize]/Vt -1))/2; /* from diode equation: I=Is*(exp(V/nT)-1) */
+        n0  = 1;
+       Rs0  = (fabs((V0[s+1]-V0[s-2])/(I0[s+1]-I0[s-2]))+fabs((V0[s+2]-V0[s-1])/(I0[s+2]-I0[s-1])))/2;
+       Rp0  = (fabs((V0[p+1]-V0[p-2])/(I0[p+1]-I0[p-2]))+fabs((V0[p+2]-V0[p-1])/(I0[p+2]-I0[p-1])))/2;
        Js10 = Js0;
        Js20 = Js0;
     }
@@ -454,6 +450,7 @@ int main(int argc, char **argv)
      if(CurrentUnit=='2')I0[i]=I0[i]/1000;
     }
 
+      /* Display raw IV curve */
 
  printf("Which model should be used for the IV curve fitting (enter 1 or 2)?:\n ");
  printf("\t 1: a single-diode model\n ");
@@ -499,7 +496,7 @@ int main(int argc, char **argv)
               Rp0  = genbest[best_gen_number][3]; //Rsh, specific shunt resistance (Ω·cm2).
               n0   = genbest[best_gen_number][4]; //n, diode ideality factor (1 for an ideal diode),
           printf("\n Single-diode model PSO fitting results:\n");
-          printf("\t Jph=%7.3f[mA/cm^2], Js=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2], n=%f\n",
+          printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f\n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
@@ -512,11 +509,13 @@ int main(int argc, char **argv)
               Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm2)
               Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm2).
               printf("\n Double-diode model PSO fitting results:\n");
-              printf("\t Jph=%7.3f[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
+              printf("\t Jph=%7.3f[mA/cm^2], Js1=%e[mA/cm^2], Js2=%e[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
             break;
           }
+
+           /* Update the plot: raw curve and fitting curve*/
 
      printf(" Continue the PSO fitting? [y/n]");
      scanf(" %c",&chr);
