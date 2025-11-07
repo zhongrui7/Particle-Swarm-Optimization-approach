@@ -65,7 +65,7 @@
    return  (Jph - Js1*(exp((V0+I0*Rs)/(n1*Vt)) -1)-Js2*(exp((V0+I0*Rs)/(n2*Vt)) -1)-(V0+I0*Rs)/Rp);
    }
 
- /* fitness function squared difference between exp. and simul.*/
+ /* fitness function : squared difference between exp. and simul.*/
  double func1(double * arr)
   {  int i;
    double Jph=arr[0], Js=arr[1], Rs=arr[2], Rp=arr[3], n=arr[4];
@@ -104,11 +104,11 @@
           switch(model)
           {
           case '1':
-                pop[i][0]= Jph0*(1+RNG_UNIFORM()); //Jph, photogenerated current density (ampere/cm2)
-                pop[i][1]= Js0*(1+RNG_UNIFORM()); //reverse saturation current density (ampere/cm2)
-                pop[i][2]= Rs0*(1+RNG_UNIFORM()); //Rs, specific series resistance (Ω·cm2)
-                pop[i][3]= Rp0*(1+RNG_UNIFORM()); //Rsh, specific shunt resistance (Ω·cm2).
-                pop[i][4]= n0*(1+RNG_UNIFORM()); //n, diode ideality factor (1 for an ideal diode),
+                pop[i][0]= Jph0*(1+RNG_UNIFORM()); //Jph, photogenerated current density (ampere/cm^2)
+                pop[i][1]= Js0*(1+RNG_UNIFORM()); // reverse saturation current density (ampere/cm^2)
+                pop[i][2]= Rs0*(1+RNG_UNIFORM()); // Rs, specific series resistance (Ω·cm^2)
+                pop[i][3]= Rp0*(1+RNG_UNIFORM()); // Rsh, specific shunt resistance (Ω·cm^2).
+                pop[i][4]= n0*(1+RNG_UNIFORM()); // n, diode ideality factor (1 for an ideal diode),
 
                for(int j=0;j<dim;j++)
                   {
@@ -118,8 +118,8 @@
             break;
 
           case '2':
-              pop[i][0]= Jph0*(1+RNG_UNIFORM()); //Jph, photogenerated current density (ampere/cm2)
-              pop[i][1]= Js10*(1+RNG_UNIFORM()); //diffusion current density (ampere/cm2)
+              pop[i][0]= Jph0*(1+RNG_UNIFORM()); // Jph, photogenerated current density (ampere/cm2)
+              pop[i][1]= Js10*(1+RNG_UNIFORM()); // diffusion current density (ampere/cm2)
               pop[i][2]= Js20*(1+RNG_UNIFORM()); // recombination current density (ampere/cm2)
               pop[i][3]= Rs0*(1+RNG_UNIFORM()); // Rs, specific series resistance (Ω·cm2)
               pop[i][4]= Rp0*(1+RNG_UNIFORM()); // Rsh, specific shunt resistance (Ω·cm2).
@@ -128,7 +128,7 @@
                 {
                  V[i][j]=pop[i][j]/10;
                  }
-                fitness[i] = func2(pop[i]); //Calculate the fitness function value
+                fitness[i] = func2(pop[i]); // Calculate the fitness function value
               break;
           }
 
@@ -405,7 +405,7 @@ void SortV(double arrV[],double arrI[], int n)
     }
    }
 
- /*  The main photovoltaic parameter extraction function   */
+ /*  The main function for photovoltaic parameter extraction  */
 int main(int argc, char **argv)
  {
   int i=0, j=0, k=0;
@@ -486,6 +486,7 @@ int main(int argc, char **argv)
      best_arr = min(result,maxgen);
      best_gen_number = *best_arr; // the index number of the optimal value
      best = *(best_arr+1); // the optimal value
+
      printf("\n After iterating %d times, the optimal value is: %Le.\n", k*maxgen, best);
 
       /* replace the initial parameters with the best fit */
