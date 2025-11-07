@@ -1,11 +1,11 @@
   /* Parameter extraction of solar cells using particle swarm optimization
-   * Implementing Particle Swarm Optimization (PSO) using C language
+   * Implementing Particle Swarm Optimization (PSO) in C language
    2026-06-01
-   J, current density (ampere/cm2) \n
-   JL, photogenerated current density (ampere/cm2) \n
-   I0, reverse saturation current density (ampere/cm2) \n
-   Rs, specific series resistance (Ω·cm2) \
-   Rsh, specific shunt resistance (Ω·cm2)
+   J, current density (Ampere/cm^2) \n
+   JL, photogenerated current density (Ampere/cm^2) \n
+   I0, reverse saturation current density (Ampere/cm^2) \n
+   Rs, specific series resistance (Ω·cm^2) \
+   Rsh, specific shunt resistance (Ω·cm^2)
    */
 
   #include <stdio.h>
@@ -297,10 +297,10 @@ void SortV(double arrV[],double arrI[], int n)
 {
     int i, j, min_idx;
 
-    // One by one move boundary of unsorted subarray
+    // One by one, move the boundary of the unsorted subarray
     for (i = 0; i < n - 1; i++) {
 
-        // Find the minimum element in unsorted array
+        // Find the minimum element in an unsorted array
         min_idx = i;
         for (j = i + 1; j < n; j++)
             if (arrV[j] < arrV[min_idx])
@@ -454,8 +454,8 @@ int main(int argc, char **argv)
       /* Display raw IV curve */
 
  printf("Which model should be used for the IV curve fitting (enter 1 or 2)?:\n ");
- printf("\t 1: a single-diode model\n ");
- printf("\t 2: a double-diode model\n ");
+ printf("\t 1: Single-diode model\n ");
+ printf("\t 2: Double-diode model\n ");
  scanf(" %c",&model);
  switch(model)
   { case '1':
@@ -532,7 +532,7 @@ int main(int argc, char **argv)
    /* Save fitting curve into a file */
      memset(out, '\0', sizeof(out));
      strncat(out, argv[1],6);
-     strcat(out, model=='1'? "_fit1.dat" : "_fit2.dat");
+     strcat(out, model=='1'? "_fit1S.dat" : "_fit2D.dat");
      strcat(out,"\0");
      fp = fopen(out, "w");
      if (fp == NULL)
@@ -573,5 +573,6 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
 
 
