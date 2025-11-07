@@ -1,6 +1,6 @@
   /* Parameter extraction of solar cells using particle swarm optimization
    * Implementing Particle Swarm Optimization (PSO) in C language
-   2026-06-01
+   2025-11-01
    J, current density (Ampere/cm^2) \n
    JL, photogenerated current density (Ampere/cm^2) \n
    I0, reverse saturation current density (Ampere/cm^2) \n
@@ -11,6 +11,7 @@
   #include <stdio.h>
   #include <stdlib.h>
   #include <math.h>
+  #include <string.h>
   #include <time.h>
   #include <omp.h>
 
@@ -33,8 +34,8 @@
    double fitnessgbest; // group extreme fitness value
    double genbest[maxgen][dim]; //Each generation of optimal value-valued particles
 
-   double k = 1.38e-23;
-   double q = 1.6e-19;
+   double k = 1.38e-23;  /* Boltzmann constant in unit J/K */
+   double q = 1.6e-19;  /* charge of electron in unit Coulomb */
    double T = 300; /* temperature in Kelvin */
    double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
    double A = 1.0; /* Solar cell area  in cm^2 */
@@ -157,7 +158,7 @@
   {
       pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
-      best_fit_index = min(fitness,sizepop); //find group extrema
+      best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
       // group extreme position
       for(int j=0;j<dim;j++)
@@ -233,8 +234,7 @@
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
        if(i%40==0)printf("*");
-//         printf("Cycle[%d]Error=%Le: \t",i, result[i]);
-//         printf("Jph=%Le[mA/cm^2], Js=%Le[mA/cm^2], Rs=%Le, Rp=%9.2f, n=%5.3f\n",1000*genbest[i][0],1000*genbest[i][1], genbest[i][2], genbest[i][3], genbest[i][4]);
+
      }
  }
 
@@ -395,7 +395,8 @@ void SortV(double arrV[],double arrI[], int n)
        printf("\n\t $$$ The input IV curve is a DARK current! $$$\n");
        Jph0 = 0;
        //Js0  = I0[(int)((DSize + p)/2)];
-       Js0  = -((I0[(int)((DSize + p)/2)])/exp(V0[(int)((DSize + p)/2)]/Vt -1)+I0[DSize]/exp(V0[DSize]/Vt -1))/2; /* from diode equation: I=Is*(exp(V/nT)-1) */
+       /* from diode equation: I=Is*(exp(V/nT)-1) */
+       Js0  = -((I0[(int)((DSize + p)/2)])/exp(V0[(int)((DSize + p)/2)]/Vt -1)+I0[DSize]/exp(V0[DSize]/Vt -1))/2; 
         n0  = 1;
        Rs0  = (fabs((V0[s+1]-V0[s-2])/(I0[s+1]-I0[s-2]))+fabs((V0[s+2]-V0[s-1])/(I0[s+2]-I0[s-1])))/2;
        Rp0  = (fabs((V0[p+1]-V0[p-2])/(I0[p+1]-I0[p-2]))+fabs((V0[p+2]-V0[p-1])/(I0[p+2]-I0[p-1])))/2;
@@ -414,21 +415,21 @@ int main(int argc, char **argv)
   double best; //the optimal value
 
   printf("Parameter extraction of solar cells based on a single/double diode model using Particle Swarm Optimization\n");
-  printf("the input IV curve data must be a 2-column ASCII file (V I) \n");
+  printf("Input IV curve data must be a 2-column ASCII file (V I) \n");
 
   if(argc != 2)
-     { printf("Usage: pso_PVIV_FIT IV-file\n");
+     { printf("Usage: pso_PVIV_fit0 IV-file\n");
        return 0;
       }
 
-  printf("Current Density unit in the IV file (select 1 or 2): \n");
+  printf("Current Density unit in the IV file (Select 1 or 2): \n");
   printf("\t 1: A/cm^2 \n ");
   printf("\t 2: mA/cm^2 \n ");
   do{scanf("%s",&CurrentUnit);}while(CurrentUnit!='1'&&CurrentUnit!='2');
 
   printf("Input Solar Cell Size and Temperature: [default: 1.0cm^2, 300K] \n");
   scanf("%f, %f", &A, &T);
-  Vt = 0.025875*T/300; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
+  Vt = 0.025875*T/300; /* Vt=kT/q, for example, Vt(300K)=0.0259eV */
 
   FILE *myFile;
   myFile = fopen(argv[1], "r");
@@ -473,8 +474,8 @@ int main(int argc, char **argv)
      Cell_perf();
 
      /*  start PSO timing*/
-     clock_t start,finish; //the start and end time of the procedure
-     start = clock(); //initialize the start time
+     clock_t start,finish; // the start and end time of the procedure
+     start = clock(); // initialize the start time
      srand((unsigned)time(NULL)); // initialize the random number seeds
 
    do{
@@ -484,8 +485,8 @@ int main(int argc, char **argv)
      /* index the best fit */
      best_arr = min(result,maxgen);
      best_gen_number = *best_arr; // the index number of the optimal value
-     best = *(best_arr+1); //the optimal value
-     printf("\n After iterating %d times, the optimal value is: %Le.\n",k*maxgen, best);
+     best = *(best_arr+1); // the optimal value
+     printf("\n After iterating %d times, the optimal value is: %Le.\n", k*maxgen, best);
 
       /* replace the initial parameters with the best fit */
      switch(model)
@@ -552,11 +553,11 @@ int main(int argc, char **argv)
          break;
 
        case '2':
-          for (i = 0; i<DSize; i=i+1)
+          for (j = 0; j<DSize; j=j+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp, "%lf %lf  %lf\n", V0[i], 1000*I0[i], 1000*IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
-              else{fprintf(fp, "%lf %lf  %lf\n", V0[i], I0[i], IL2(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
+              fprintf(fp, "%lf %lf  %lf\n", V0[j], 1000*I0[j], 1000*IL2(V0[j], I0[j], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              else{fprintf(fp, "%lf %lf  %lf\n", V0[j], I0[j], IL2(V0[j], I0[j], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
          break;
               }
@@ -573,6 +574,5 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
-
 
 
