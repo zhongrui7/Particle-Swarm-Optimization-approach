@@ -14,8 +14,9 @@
   #include <time.h>
   #include <omp.h>
 
-  #define c1 0.2 //The acceleration factor is generally obtained from a large number of experiments
-  #define c2 0.6
+  #define w  0.2  //the weight or inertia of the particle,
+  #define c1 0.2 //acceleration constant (cognitive parameter)
+  #define c2 0.6 //acceleration constant (social parameter)
   #define maxgen 4096  // number of iterations
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
@@ -191,7 +192,7 @@
                 // velocity update
                  double rand1 = (double)rand()/RAND_MAX; //random number between 0 and 1
                  double rand2 = (double)rand()/RAND_MAX;
-                 V[j][k] = 0.9*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
+                 V[j][k] = w*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
                   // particle update
                  pop[j][k] = pop[j][k] + V[j][k];
                  if(pop[j][k] < popmin)
@@ -572,4 +573,5 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
 
