@@ -1,6 +1,6 @@
   /* Parameter extraction of solar cells using particle swarm optimization
    * Implementing Particle Swarm Optimization (PSO) using C language
-   2022-06-01
+   2026-06-01
    J, current density (ampere/cm2) \n
    JL, photogenerated current density (ampere/cm2) \n
    I0, reverse saturation current density (ampere/cm2) \n
@@ -14,8 +14,8 @@
   #include <time.h>
   #include <omp.h>
 
-  #define c1 1.495 //The acceleration factor is generally obtained from a large number of experiments
-  #define c2 1.495
+  #define c1 0.2 //The acceleration factor is generally obtained from a large number of experiments
+  #define c2 0.6
   #define maxgen 4096  // number of iterations
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
@@ -572,3 +572,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
