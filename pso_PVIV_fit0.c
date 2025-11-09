@@ -20,8 +20,8 @@
   #include <omp.h>
 
   #define w  0.2  //the weight or inertia of the particle,
-  #define c1 0.2 //acceleration constant (cognitive parameter)
-  #define c2 0.6 //acceleration constant (social parameter)
+  #define c1 0.2 // personal acceleration constant (cognitive parameter)
+  #define c2 0.6 //group acceleration constant (social parameter)
   #define maxgen 2028  // number of iterations
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
@@ -582,4 +582,5 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
 
