@@ -160,7 +160,7 @@
   /* iterative optimization */
   void PSO_func(void)
   {
-    //  pop_init();
+      //pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
       best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
@@ -237,7 +237,7 @@
            genbest[i][k] = gbest[k]; // The optimal value of each generation is the record of the particle position
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
-       if(i%32 == 0)printf(" *");
+       if(i%64 == 0)printf("*");
 
      }
  }
