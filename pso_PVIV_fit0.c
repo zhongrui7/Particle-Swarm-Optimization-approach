@@ -116,7 +116,7 @@
 
                for(int j=0;j<dim;j++)
                   {
-                   V[i][j]=pop[i][j]/10;
+                   V[i][j]=pop[i][j];
                    }
                fitness[i] = func1(pop[i]); //Calculate the fitness function value
             break;
@@ -582,3 +582,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
