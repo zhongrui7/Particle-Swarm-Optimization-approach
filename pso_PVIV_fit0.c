@@ -3,7 +3,11 @@
    2025-11-01
    J, current density (Ampere/cm^2) \n
    JL, photogenerated current density (Ampere/cm^2) \n
-   I0, reverse saturation current density (Ampere/cm^2) \n
+   J0, reverse saturation current density (Ampere/cm^2) \n
+   J10, saturation current density of diffusion diode (Ampere/cm^2) \n
+   J20, saturation current density of recombination diode (Ampere/cm^2) \n
+   n1 = 1, ideality factor of diffusion diode \n
+   n2 = 2, ideality factor of diffusion diode \n
    Rs, specific series resistance (Ω·cm^2) \
    Rsh, specific shunt resistance (Ω·cm^2)
    */
@@ -156,7 +160,7 @@
   /* iterative optimization */
   void PSO_func(void)
   {
-      pop_init();
+      // pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
       best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
@@ -478,16 +482,18 @@ int main(int argc, char **argv)
      start = clock(); // initialize the start time
      srand((unsigned)time(NULL)); // initialize the random number seeds
 
+     pop_init();
    do{
      printf("PSO is working on Model %c, please wait : \n", model);
      PSO_func();
      k++;
+
      /* index the best fit */
      best_arr = min(result,maxgen);
      best_gen_number = *best_arr; // the index number of the optimal value
      best = *(best_arr+1); // the optimal value
-
-     printf("\n After iterating %d times, the optimal value is: %Le.\n", k*maxgen, best);
+     
+     printf("\n Best_gen_number= %d , the optimal value is: %Le.\n", best_gen_number, best);
 
       /* replace the initial parameters with the best fit */
      switch(model)
@@ -575,5 +581,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
-
 
