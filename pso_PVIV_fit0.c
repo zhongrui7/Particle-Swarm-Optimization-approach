@@ -22,7 +22,7 @@
   #define w  0.2  //the weight or inertia of the particle,
   #define c1 0.2 //acceleration constant (cognitive parameter)
   #define c2 0.6 //acceleration constant (social parameter)
-  #define maxgen 4096  // number of iterations
+  #define maxgen 2028  // number of iterations
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
   #define popmin 0 // Individual minimum value
@@ -42,7 +42,7 @@
    double q = 1.6e-19;  /* charge of electron in unit Coulomb */
    double T = 300; /* temperature in Kelvin */
    double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
-   double A = 1.0; /* Solar cell area  in cm^2 */
+   double A = 1.0; /* Solar cell area in cm^2 */
 
    double Jph0=1.2e-3,  Rs0=0.1, Rp0=2345; /* initial common parameters for both single/double-diode */
    double Js0=1.2e-5, n0=1; /* initial single-diode parameters */
@@ -160,7 +160,7 @@
   /* iterative optimization */
   void PSO_func(void)
   {
-      // pop_init();
+    //  pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
       best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
@@ -237,7 +237,7 @@
            genbest[i][k] = gbest[k]; // The optimal value of each generation is the record of the particle position
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
-       if(i%40==0)printf("*");
+       if(i%32 == 0)printf(" *");
 
      }
  }
@@ -365,10 +365,10 @@ void SortV(double arrV[],double arrI[], int n)
 
     printf("\t Voc=V0[%d]=%f, Jsc=I0[%d]=%f \n", s,Voc, p,Jsc);
       /* print out the photovoltaic performance if the input IV curve is an illuminated one */
-    if(Jsc!=0&&Voc!=0)
+    if(Jsc!=0 && Voc!=0)
      {
-        FF = Pmax/(Voc*Jsc);
-       eff = Pmax*1000;
+        FF = Pmax/(Voc * Jsc);
+       eff = Pmax * 1000;
        printf("\t Voc=%7.3f[V], Jsc=%7.4f[mA/cm^2], FF=%5.2f, effi=%7.3f%% \n", Voc, Jsc*1000, FF, eff);
        printf("\t Pmax=%7.3f[mW/cm^2],  Vm=%7.3f[V], Jm=%7.3f[mA/cm^2] \n", Pmax*1000, Vm, 1000*Jm);
 
@@ -427,8 +427,8 @@ int main(int argc, char **argv)
       }
 
   printf("Current Density unit in the IV file (Select 1 or 2): \n");
-  printf("\t 1: A/cm^2 \n ");
-  printf("\t 2: mA/cm^2 \n ");
+  printf("\t 1: A \n ");
+  printf("\t 2: mA \n ");
   do{scanf("%s",&CurrentUnit);}while(CurrentUnit!='1'&&CurrentUnit!='2');
 
   printf("Input Solar Cell Size and Temperature: [default: 1.0cm^2, 300K] \n");
@@ -453,7 +453,7 @@ int main(int argc, char **argv)
    {
      fscanf(myFile, "%lf%lf", &V0[i], &I0[i]);
      I0[i]=I0[i]/A;
-     if(CurrentUnit=='2')I0[i]=I0[i]/1000;
+     if(CurrentUnit=='2')I0[i]=I0[i]*10/A;
     }
 
       /* Display raw IV curve */
@@ -482,7 +482,7 @@ int main(int argc, char **argv)
      start = clock(); // initialize the start time
      srand((unsigned)time(NULL)); // initialize the random number seeds
 
-     pop_init();
+      pop_init();
    do{
      printf("PSO is working on Model %c, please wait : \n", model);
      PSO_func();
@@ -492,8 +492,9 @@ int main(int argc, char **argv)
      best_arr = min(result,maxgen);
      best_gen_number = *best_arr; // the index number of the optimal value
      best = *(best_arr+1); // the optimal value
-     
-     printf("\n Best_gen_number= %d , the optimal value is: %Le.\n", best_gen_number, best);
+     //best = fitnessgbest;
+
+     printf("\n Gen_number= %d , the optimal value is: %.10e.\n", k, best);
 
       /* replace the initial parameters with the best fit */
      switch(model)
@@ -506,7 +507,7 @@ int main(int argc, char **argv)
               n0   = genbest[best_gen_number][4]; //n, diode ideality factor (1 for an ideal diode),
           printf("\n Single-diode model PSO fitting results:\n");
           printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f\n",
-                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+                 10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
             break;
@@ -519,7 +520,7 @@ int main(int argc, char **argv)
               Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm2).
               printf("\n Double-diode model PSO fitting results:\n");
               printf("\t Jph=%7.3f[mA/cm^2], Js1=%e[mA/cm^2], Js2=%e[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
-                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+                 10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
             break;
           }
@@ -554,7 +555,7 @@ int main(int argc, char **argv)
        case '1':
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp, "%lf %lf  %lf\n", V0[i],1000*I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf  %lf\n", V0[i],10*I0[i], 10*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
             else {fprintf(fp, "%lf %lf  %lf\n", V0[i],I0[i],  IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
@@ -563,7 +564,7 @@ int main(int argc, char **argv)
           for (j = 0; j<DSize; j=j+1)
              {
               if(CurrentUnit=='2')
-              fprintf(fp, "%lf %lf  %lf\n", V0[j], 1000*I0[j], 1000*IL2(V0[j], I0[j], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+              fprintf(fp, "%lf %lf  %lf\n", V0[j], 10*I0[j], 10*IL2(V0[j], I0[j], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
               else{fprintf(fp, "%lf %lf  %lf\n", V0[j], I0[j], IL2(V0[j], I0[j], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
               }
          break;
@@ -581,4 +582,3 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
-
