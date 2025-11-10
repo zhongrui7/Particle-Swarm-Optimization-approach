@@ -160,7 +160,7 @@
   /* iterative optimization */
   void PSO_func(void)
   {
-      pop_init();
+    //  pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
       best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
@@ -360,8 +360,7 @@ void SortV(double arrV[],double arrI[], int n)
      /* calculate Voc=open circuit voltage and Isc=short circuit current */
       Jsc= (V0[p]==0)? fabs(I0[p]) : I0[p-1]-V0[p-1]*(I0[p+1]-I0[p-1])/(V0[p+1]-V0[p-1]);
       Voc= (I0[s]==0)? fabs(V0[s]) : V0[s-1]-I0[s-1]*(V0[s+1]-V0[s-1])/(I0[s+1]-I0[s-1]);
-
-
+      
     printf("\t Voc=V0[%d]=%f, Jsc=I0[%d]=%f \n", s,Voc, p,Jsc);
       /* print out the photovoltaic performance if the input IV curve is an illuminated one */
     if(Jsc!=0 && Voc!=0)
@@ -384,13 +383,13 @@ void SortV(double arrV[],double arrI[], int n)
 
   //              e1 = exp(Voc/(n0*Vt));
   //              Jph0 = Js0*(e1 - 1) + (Voc / Rp0);
-            printf("Initial guess:\n\t Jph0=%Le[mA/cm^2], Js0=%Le[mA/cm^2],\n\t Rs0=%7.3f[Ohm.cm^2], Rp0=%9.3f[Ohm.cm^2], n0=%3.2f\n", Jph0*1000, Js0*1000, Rs0, Rp0, n0);
+            printf("Initial guess:\n\t Jph0= %.3e[mA/cm^2], Js0= %.3e[mA/cm^2],\n\t Rs0= %7.3f[Ohm.cm^2], Rp0= %9.3f[Ohm.cm^2], n0= %3.2f\n", Jph0*1000, Js0*1000, Rs0, Rp0, n0);
             break;
 
           case '2':
             Js10 = (Jsc*(Rp0-Rs0) - Voc)/(Rp0*(exp(Voc/(n1*Vt))-exp(Rs0*Jsc/(n1*Vt))));
             Js20 = Jsc/(exp(Voc*q/(k*T))-1);
-            printf("Initial guess:\n\t Jph0=%Le[mA/cm^2], Js1=%Le[mA/cm^2], Js2=%Le[mA/cm^2],\n\t Rs0=%7.3f[Ohm.cm^2, Rp0=%9.3f[Ohm.cm^2]\n", Jph0*1000, Js10*1000, Js20*1000, Rs0, Rp0);
+            printf("Initial guess:\n\t Jph0= %.3e[mA/cm^2], Js1= %.3e[mA/cm^2], Js2= %.3e[mA/cm^2],\n\t Rs0= %7.3f[Ohm.cm^2, Rp0= %9.3f[Ohm.cm^2]\n", Jph0*1000, Js10*1000, Js20*1000, Rs0, Rp0);
             break;
          }
        }
@@ -491,9 +490,8 @@ int main(int argc, char **argv)
      best_arr = min(result,maxgen);
      best_gen_number = *best_arr; // the index number of the optimal value
      best = *(best_arr+1); // the optimal value
-     //best = fitnessgbest;
 
-     printf("\n Gen_number= %d , the optimal value is: %.10e.\n", k, best);
+     printf("\n Gen_number= %d , the optimal value is: %.5le.\n", k, best);
 
       /* replace the initial parameters with the best fit */
      switch(model)
@@ -505,7 +503,7 @@ int main(int argc, char **argv)
               Rp0  = genbest[best_gen_number][3]; // Rsh, specific shunt resistance (Ω·cm^2).
               n0   = genbest[best_gen_number][4]; // n, diode ideality factor (1 for an ideal diode),
           printf("\n Single-diode model PSO fitting results: \n");
-          printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f \n",
+          printf("\t Jph= %7.3f[mA/cm^2], Js= %7.3e[mA/cm^2],\n\t Rs= %7.3e[Ohm/cm^2], Rp= %9.3e[Ohm/cm^2], n= %f \n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
@@ -518,7 +516,7 @@ int main(int argc, char **argv)
               Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm^2)
               Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm^2).
               printf("\n Double-diode model PSO fitting results:\n");
-              printf("\t Jph=%7.3f[mA/cm^2], Js1=%e[mA/cm^2], Js2=%e[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
+              printf("\t Jph= %7.3f[mA/cm^2], Js1= %7.3e[mA/cm^2], Js2= %7.3e[mA/cm^2],\n\t Rs= %7.3f[Ohm/cm^2], Rp= %9.3f[Ohm/cm^2] \n",
                  1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
             break;
@@ -581,6 +579,5 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
-
 
 
