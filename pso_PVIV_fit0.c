@@ -45,7 +45,7 @@
    double A = 1.0; /* Active ilumination area in cm^2 */
 
    double Jph0,  Rs0, Rp0; /* initial common parameters for both single/double-diode */
-   double Js0, n0; /* initial single-diode parameters */
+   double Js0, n0=1; /* initial single-diode parameters */
    double Js10, Js20, n1=1, n2=2; /* initial double-diode parameters */
    double V0[300],I0[300]; /*experimental I-V curve data*/
    double Jsc=0, Voc=0, FF=0, Pmax=0, Vm=0, Jm=0, eff=0;
@@ -581,5 +581,6 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
 
 
