@@ -506,7 +506,7 @@ int main(int argc, char **argv)
               n0   = genbest[best_gen_number][4]; // n, diode ideality factor (1 for an ideal diode),
           printf("\n Single-diode model PSO fitting results: \n");
           printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f \n",
-                 1000*genbest[best_gen_number][0],1099*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
             break;
@@ -581,4 +581,5 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
 
