@@ -26,7 +26,7 @@
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
   #define popmin 0 // Individual minimum value
-  #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5~+0.5
+  #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5 ~ +0.5
 
    double pop[sizepop][dim]; // define population array
    double V[sizepop][dim]; // Define the population velocity array
@@ -42,7 +42,7 @@
    double q = 1.6e-19;  /* charge of electron in unit Coulomb */
    double T = 300; /* temperature in Kelvin */
    double Vt = 0.025875; /* Vt(T)=kT/q, for example, Vt(300K)=0.0259eV*/
-   double A = 1.0; /* Solar cell area in cm^2 */
+   double A = 1.0; /* Active ilumination area in cm^2 */
 
    double Jph0,  Rs0, Rp0; /* initial common parameters for both single/double-diode */
    double Js0, n0; /* initial single-diode parameters */
@@ -237,7 +237,7 @@
            genbest[i][k] = gbest[k]; // The optimal value of each generation is the record of the particle position
            }
        result[i] = fitnessgbest; // The optimal value of each generation is recorded to the array
-       if(i%64 == 0)printf("*");
+       if(i%32 == 0)printf("*");
 
      }
  }
@@ -321,31 +321,30 @@ void SortV(double arrV[],double arrI[], int n)
    {
    /* find open circuit voltage and short circuit current */
    int i=0, s=0, p=0, m=0;
-   double Vtmp=fabs(V0[0]), e1, e2;
-   double Itmp=fabs(I0[0]);
+   double V_tmp=fabs(V0[0]), e1, e2;
+   double I_tmp=fabs(I0[0]);
 
    /*  sort voltage array in ascending order, current array changes accordingly */
    SortV(V0,I0, DSize);
 
   /* change current polarity if the short circuit current is negative */
-   if ((V0[1]*I0[1]) > 0 && I0[0]+I0[1]<0)
+   if ((V0[1]*I0[1]) > 0 && I0[0]+I0[1]<0){
+           for( i=0; i < DSize; ++i)
+              { I0[i]=-I0[i]; }
+           }
+
    for( i=0; i < DSize; ++i)
     {
-     I0[i]=-I0[i];
-    }
-
-     for( i=0; i < DSize; ++i)
-    {
      /* find Jsc */
-     if(fabs(V0[i]) < Vtmp)
+     if(fabs(V0[i]) < V_tmp)
          {
-          Vtmp = fabs(V0[i]);
+          V_tmp = fabs(V0[i]);
           p=i;
          };
      /* find Voc */
-     if(fabs(I0[i]) < Itmp)
+     if(fabs(I0[i]) < I_tmp)
          {
-          Itmp=fabs(I0[i]);
+          I_tmp=fabs(I0[i]);
           s=i;
           };
       /* find Pmax */
@@ -453,7 +452,7 @@ int main(int argc, char **argv)
    {
      fscanf(myFile, "%lf%lf", &V0[i], &I0[i]);
      I0[i]=I0[i]/A;
-     if(CurrentUnit=='2')I0[i]=I0[i]*10/A;
+     if(CurrentUnit=='2')I0[i]=I0[i]/1000;
     }
 
       /* Display raw IV curve */
@@ -507,7 +506,7 @@ int main(int argc, char **argv)
               n0   = genbest[best_gen_number][4]; // n, diode ideality factor (1 for an ideal diode),
           printf("\n Single-diode model PSO fitting results: \n");
           printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f \n",
-                 10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+                 1000*genbest[best_gen_number][0],1099*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
             break;
@@ -520,7 +519,7 @@ int main(int argc, char **argv)
               Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm^2).
               printf("\n Double-diode model PSO fitting results:\n");
               printf("\t Jph=%7.3f[mA/cm^2], Js1=%e[mA/cm^2], Js2=%e[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
-                 10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+                 1000*genbest[best_gen_number][0],1000*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
             break;
           }
@@ -555,7 +554,7 @@ int main(int argc, char **argv)
        case '1':
           for (i = 0; i<DSize; i=i+1)
            {
-            if(CurrentUnit=='2')fprintf(fp, "%lf %lf  %lf\n", V0[i],10*I0[i], 10*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
+            if(CurrentUnit=='2')fprintf(fp, "%lf %lf  %lf\n", V0[i],1000*I0[i], 1000*IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));
             else {fprintf(fp, "%lf %lf  %lf\n", V0[i],I0[i],  IL1(V0[i], I0[i], genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]));}
             }
          break;
@@ -582,3 +581,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
