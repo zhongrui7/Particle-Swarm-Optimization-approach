@@ -7,7 +7,7 @@
    J10, saturation current density of diffusion diode (Ampere/cm^2) \n
    J20, saturation current density of recombination diode (Ampere/cm^2) \n
    n1 = 1, ideality factor of diffusion diode \n
-   n2 = 2, ideality factor of diffusion diode \n
+   n2 = 2, ideality factor of recombination diode \n
    Rs, specific series resistance (Ω·cm^2) \
    Rsh, specific shunt resistance (Ω·cm^2)
    */
@@ -21,7 +21,7 @@
 
   #define w  0.2  //the weight or inertia of the particle,
   #define c1 0.2 // personal acceleration constant (cognitive parameter)
-  #define c2 0.6 //group acceleration constant (social parameter)
+  #define c2 0.6 // group acceleration constant (social parameter)
   #define maxgen 2028  // number of iterations
   #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
@@ -41,12 +41,12 @@
    double k = 1.38e-23;  /* Boltzmann constant in unit J/K */
    double q = 1.6e-19;  /* charge of electron in unit Coulomb */
    double T = 300; /* temperature in Kelvin */
-   double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV*/
+   double Vt = 0.025875; /* Vt(T)=kT/q, for example, Vt(300K)=0.0259eV*/
    double A = 1.0; /* Solar cell area in cm^2 */
 
-   double Jph0=1.2e-3,  Rs0=0.1, Rp0=2345; /* initial common parameters for both single/double-diode */
-   double Js0=1.2e-5, n0=1; /* initial single-diode parameters */
-   double Js10=1.2e-7, Js20=1.2e-7, n1=1, n2=2; /* initial double-diode parameters */
+   double Jph0,  Rs0, Rp0; /* initial common parameters for both single/double-diode */
+   double Js0, n0; /* initial single-diode parameters */
+   double Js10, Js20, n1=1, n2=2; /* initial double-diode parameters */
    double V0[300],I0[300]; /*experimental I-V curve data*/
    double Jsc=0, Voc=0, FF=0, Pmax=0, Vm=0, Jm=0, eff=0;
 
@@ -108,7 +108,7 @@
           switch(model)
           {
           case '1':
-                pop[i][0]= Jph0*(1+RNG_UNIFORM()); //Jph, photogenerated current density (ampere/cm^2)
+                pop[i][0]= Jph0*(1+RNG_UNIFORM()); // Jph, photogenerated current density (ampere/cm^2)
                 pop[i][1]= Js0*(1+RNG_UNIFORM()); // reverse saturation current density (ampere/cm^2)
                 pop[i][2]= Rs0*(1+RNG_UNIFORM()); // Rs, specific series resistance (Ω·cm^2)
                 pop[i][3]= Rp0*(1+RNG_UNIFORM()); // Rsh, specific shunt resistance (Ω·cm^2).
@@ -130,7 +130,7 @@
 
              for(int j=0;j<dim;j++)
                 {
-                 V[i][j]=pop[i][j]/10;
+                 V[i][j]=pop[i][j];
                  }
                 fitness[i] = func2(pop[i]); // Calculate the fitness function value
               break;
@@ -160,7 +160,7 @@
   /* iterative optimization */
   void PSO_func(void)
   {
-      //pop_init();
+      pop_init();
       double * best_fit_index; // Used to store group extrema and its position (serial number)
       best_fit_index = min(fitness,sizepop); // find group extrema
       int index = (int)(*best_fit_index);
@@ -195,7 +195,7 @@
           for(int k=0;k<dim;k++)
              {
                 // velocity update
-                 double rand1 = (double)rand()/RAND_MAX; //random number between 0 and 1
+                 double rand1 = (double)rand()/RAND_MAX; // random number between 0 and 1
                  double rand2 = (double)rand()/RAND_MAX;
                  V[j][k] = w*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
                   // particle update
@@ -316,8 +316,8 @@ void SortV(double arrV[],double arrI[], int n)
     }
 }
 
-  /* calculate solar cell parameters including Voc, Isc, FF, and effi. */
-  void Cell_perf()
+  /* calculate Photovoltaic parameters including Voc, Isc, FF, and effi. */
+  void PV_perf()
    {
    /* find open circuit voltage and short circuit current */
    int i=0, s=0, p=0, m=0;
@@ -409,14 +409,14 @@ void SortV(double arrV[],double arrI[], int n)
     }
    }
 
- /*  The main function for photovoltaic parameter extraction  */
+ ///***  The main function for photovoltaic parameter extraction  ***///
 int main(int argc, char **argv)
  {
   int i=0, j=0, k=0;
   char chr;
   double * best_arr;
   int best_gen_number; // the index number of the optimal value
-  double best; //the optimal value
+  double best; // the optimal value
 
   printf("Parameter extraction of solar cells based on a single/double diode model using Particle Swarm Optimization\n");
   printf("Input IV curve data must be a 2-column ASCII file (V I) \n");
@@ -474,8 +474,8 @@ int main(int argc, char **argv)
      printf("Error! this model is not available, please enter either 1 or 2, Bye! \n");
      return 0;
   }
-     /* print the solar cell performance including Voc, Isc, FF, eff */
-     Cell_perf();
+     /* print the Photovoltaic performance including Voc, Isc, FF, eff */
+     PV_perf();
 
      /*  start PSO timing*/
      clock_t start,finish; // the start and end time of the procedure
@@ -500,24 +500,24 @@ int main(int argc, char **argv)
      switch(model)
           {
           case '1':
-              Jph0 = genbest[best_gen_number][0]; //Jph, photogenerated current density (ampere/cm2)
-              Js0  = genbest[best_gen_number][1]; //reverse saturation current density (ampere/cm2)
-              Rs0  = genbest[best_gen_number][2]; //Rs, specific series resistance (Ω·cm2)
-              Rp0  = genbest[best_gen_number][3]; //Rsh, specific shunt resistance (Ω·cm2).
-              n0   = genbest[best_gen_number][4]; //n, diode ideality factor (1 for an ideal diode),
-          printf("\n Single-diode model PSO fitting results:\n");
-          printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f\n",
+              Jph0 = genbest[best_gen_number][0]; // Jph, photogenerated current density (ampere/cm^2)
+              Js0  = genbest[best_gen_number][1]; // reverse saturation current density (ampere/cm^2)
+              Rs0  = genbest[best_gen_number][2]; // Rs, specific series resistance (Ω·cm^2)
+              Rp0  = genbest[best_gen_number][3]; // Rsh, specific shunt resistance (Ω·cm^2).
+              n0   = genbest[best_gen_number][4]; // n, diode ideality factor (1 for an ideal diode),
+          printf("\n Single-diode model PSO fitting results: \n");
+          printf("\t Jph=%7.3f[mA/cm^2], Js=%e[mA/cm^2],\n\t Rs=%e[Ohm/cm^2], Rp=%e[Ohm/cm^2], n=%f \n",
                  10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
 
 
             break;
 
           case '2':
-              Jph0 = genbest[best_gen_number][0]; //Jph, photogenerated current density (ampere/cm2)
-              Js10 = genbest[best_gen_number][1]; //diffusion current density (ampere/cm2)
-              Js20 = genbest[best_gen_number][2]; // recombination current density (ampere/cm2)
-              Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm2)
-              Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm2).
+              Jph0 = genbest[best_gen_number][0]; // Jph, photogenerated current density (ampere/cm^2)
+              Js10 = genbest[best_gen_number][1]; // diffusion current density (ampere/cm^2)
+              Js20 = genbest[best_gen_number][2]; // recombination current density (ampere/cm^2)
+              Rs0  = genbest[best_gen_number][3]; // Rs, specific series resistance (Ω·cm^2)
+              Rp0  = genbest[best_gen_number][4]; // Rsh, specific shunt resistance (Ω·cm^2).
               printf("\n Double-diode model PSO fitting results:\n");
               printf("\t Jph=%7.3f[mA/cm^2], Js1=%e[mA/cm^2], Js2=%e[mA/cm^2],\n\t Rs=%7.3f[Ohm/cm^2], Rp=%9.3f[Ohm/cm^2] \n",
                  10*genbest[best_gen_number][0],10*genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
@@ -582,5 +582,3 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
-
-
