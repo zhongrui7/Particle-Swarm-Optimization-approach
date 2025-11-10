@@ -122,11 +122,11 @@
             break;
 
           case '2':
-              pop[i][0]= Jph0*(1+RNG_UNIFORM()); // Jph, photogenerated current density (ampere/cm2)
-              pop[i][1]= Js10*(1+RNG_UNIFORM()); // diffusion current density (ampere/cm2)
-              pop[i][2]= Js20*(1+RNG_UNIFORM()); // recombination current density (ampere/cm2)
-              pop[i][3]= Rs0*(1+RNG_UNIFORM()); // Rs, specific series resistance (Ω·cm2)
-              pop[i][4]= Rp0*(1+RNG_UNIFORM()); // Rsh, specific shunt resistance (Ω·cm2).
+              pop[i][0]= Jph0*(1+RNG_UNIFORM()); // Jph, photogenerated current density (ampere/cm^2)
+              pop[i][1]= Js10*(1+RNG_UNIFORM()); // diffusion current density (ampere/cm^2)
+              pop[i][2]= Js20*(1+RNG_UNIFORM()); // recombination current density (ampere/cm^2)
+              pop[i][3]= Rs0*(1+RNG_UNIFORM()); // Rs, specific series resistance (Ω·cm^2)
+              pop[i][4]= Rp0*(1+RNG_UNIFORM()); // Rsh, specific shunt resistance (Ω·cm^2).
 
              for(int j=0;j<dim;j++)
                 {
@@ -203,10 +203,10 @@
                  if(pop[j][k] < popmin)
                      pop[j][k] = popmin;
              }
-                 pop[j][0]= (Jsc==0)? 0 : pop[j][0]; /* if the input IV is a dark current, set Jph=0 */
+                 pop[j][0]= (Jsc == 0)? 0 : pop[j][0]; /* if the input IV is a dark current, set Jph=0 */
                  if(model=='1')
                    {do{pop[j][4]= n0*(1+RNG_UNIFORM()/50);}
-                      while(pop[j][4]<0||pop[j][4]>3);
+                      while(pop[j][4]<0 || pop[j][4]>3);
                       } // set the range for 0<n<3 for the single diode model,
 
            fitness[j] = (model=='1')? func1(pop[j]): func2(pop[j]); //The fitness value of the new particle
