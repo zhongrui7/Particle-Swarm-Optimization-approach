@@ -19,13 +19,15 @@
   #include <time.h>
   #include <omp.h>
 
-  #define c1 1.495 //The acceleration factor is generally obtained from a large number of experiments
-  #define c2 1.495
+  //The acceleration factor is generally obtained from a large number of experiments
+  #define w  0.4  //the weight or inertia of the particle,
+  #define c1 0.2 // personal acceleration constant (cognitive parameter)
+  #define c2 0.6 // group acceleration constant (social parameter)
   #define maxgen 4096  // number of iterations
-  #define sizepop 512 // population size
+  #define sizepop 1024 // population size
   #define dim 5 // the dimension of the particle
   #define popmin 0 // Individual minimum value
-  #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5~+0.5
+  #define RNG_UNIFORM() ((double)rand())/RAND_MAX-0.5  // random number in the range -0.5 ~ +0.5
 
    double pop[sizepop][dim]; // define population array
    double V[sizepop][dim]; // Define the population velocity array
@@ -153,7 +155,7 @@
       return best_fit_index;
     }
 
-  /* iterative optimization */
+  //*** PSO iterative optimization ***//
   void PSO_func(void)
   {
       pop_init();
@@ -193,7 +195,7 @@
                 // velocity update
                  double rand1 = (double)rand()/RAND_MAX; //random number between 0 and 1
                  double rand2 = (double)rand()/RAND_MAX;
-                 V[j][k] = 0.9*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
+                 V[j][k] = w*V[j][k] + c1*rand1*(pbest[j][k]-pop[j][k]) + c2*rand2*(gbest[k]-pop[j][k]);
                   // particle update
                  pop[j][k] = pop[j][k] + V[j][k];
                  if(pop[j][k] < popmin)
