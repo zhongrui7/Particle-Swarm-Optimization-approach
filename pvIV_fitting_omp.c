@@ -40,7 +40,7 @@ double genbest[maxgen][dim]; // Each generation of optimal value-valued particle
 double k = 1.38e-23;
 double q = 1.6e-19;
 double T = 300; /* temperature in Kelvin */
-double Vt = 0.025875*T/300; /* Vt=kT/q, for example, Vt(300K)=0.0259eV */
+double Vt = 0.025875; /* Vt=kT/q, for example, Vt(300K)=0.0259eV */
 double A = 1.0; /* Solar cell area in cm^2 */
 
 double Jph0=1.2e-3, Rs0=0.1, Rp0=2345; /* initial common parameters for both single/double-diode */
