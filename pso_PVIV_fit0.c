@@ -14,6 +14,7 @@
 
   #include <stdio.h>
   #include <stdlib.h>
+  #include <sys/types.h>
   #include <math.h>
   #include <string.h>
   #include <time.h>
@@ -521,3 +522,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
