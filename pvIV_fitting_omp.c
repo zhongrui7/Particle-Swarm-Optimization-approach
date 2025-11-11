@@ -1,11 +1,15 @@
 /* Parameter extraction of solar cells using particle swarm optimization
  * Implementing Particle Swarm Optimization (PSO) using C language with OpenMP parallelization
  * 2025-11-11
- * J, current density (ampere/cm2)
- * JL, photogenerated current density (ampere/cm2)
- * I0, reverse saturation current density (ampere/cm2)
- * Rs, specific series resistance (Ω·cm2)
- * Rsh, specific shunt resistance (Ω·cm2)
+   J, current density (Ampere/cm^2) \n
+   JL, photogenerated current density (Ampere/cm^2) \n
+   J0, reverse saturation current density (Ampere/cm^2) \n
+   J10, saturation current density of diffusion diode (Ampere/cm^2) \n
+   J20, saturation current density of recombination diode (Ampere/cm^2) \n
+   n1 = 1, ideality factor of diffusion diode \n
+   n2 = 2, ideality factor of recombination diode \n
+   Rs, specific series resistance (Ω·cm^2) \
+   Rsh, specific shunt resistance (Ω·cm^2)
  */
 
 #include <stdio.h>
