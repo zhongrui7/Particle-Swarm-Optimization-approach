@@ -1,5 +1,5 @@
   /*
-   * Implementing Particle Swarm Optimization (PSO) using C language
+   * Implementing Particle Swarm Optimization (PSO) in the C language
    * Thermoconductivity-curve-fitting-in-Particle-Swarm-Optimization-approach
    * fithermocond.c in main
    * reference:
@@ -7,15 +7,16 @@
    * J. Callaway, Phys. Rev. 120, 1149 (1960).
    */
 
-  #include<stdio.h>
-  #include<stdlib.h>
-  #include<math.h>
-  #include<time.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #include <math.h>
+  #include <time.h>
   #include <omp.h>
 
   #define c1 1.495 //The acceleration factor is generally obtained from a large number of experiments
   #define c2 1.495
-  #define maxgen 100  // number of iterations
+  #define maxgen  256  // number of iterations
   #define sizepop 128 // population size
   #define dim 5 // the dimension of the particle
   #define popmin 0 // Individual minimum value
@@ -32,8 +33,8 @@
    double fitnessgbest; // group extreme fitness value
    double genbest[maxgen][dim]; //Each generation of optimal value-valued particles
 
-   double kb=1.38e-23;
-   double hb=1.05e-34;
+   double kb=1.38e-23;   // boltzmann constant
+   double hb=1.05e-34;   // Plank constant divided by 2π; the quantization of angular momentum
    double hok=7.641812E-12; //get the value of ratio hb/kb;
 
    int DSize = 0;
@@ -138,7 +139,7 @@ double func( double * arr)
       return best_fit_index;
     }
 
-  /*iterative optimization*/ 
+  /*** iterative optimization ***/ 
   void PSO_func(void)
   {
       pop_init();
@@ -265,7 +266,7 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     return pos;
 }
 
- /*The main function*/ 
+ //***** The main function *****// 
 int main(int argc, char **argv)
  {
  int i=0;
@@ -314,7 +315,7 @@ int main(int argc, char **argv)
       }
 
     printf("After iterating %d times, the optimal value is obtained at the %dth time, and the optimal value is:%f.\n",maxgen,best_gen_number+1,best);
-    printf("The position where the optimal value is obtained is:\nv=%Le, \nL=%Le, \nA=%Le, \nB=%Le, \nD=%Le\n",genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
+    printf("The position where the optimal value is obtained is:\nv=%.5e, \nL=%.5e, \nA=%.5e, \nB=%.5e, \nD=%.5e\n",genbest[best_gen_number][0],genbest[best_gen_number][1], genbest[best_gen_number][2], genbest[best_gen_number][3], genbest[best_gen_number][4]);
     finish = clock(); //End time
     double duration = (double)(finish - start)/CLOCKS_PER_SEC; // program running time
     printf("Program running time:%lf seconds\n",duration);
@@ -325,3 +326,4 @@ int main(int argc, char **argv)
      free(line);
   exit(EXIT_SUCCESS);
  }
+
